@@ -1,17 +1,22 @@
 import { useAuth } from "../context/AuthContext";
 // ✅ Navbar import ඉවත් කළා
 import { useNavigate } from "react-router-dom";
+import BackgroundSlideshow, { toImgurDirect } from "../components/common/BackgroundSlideshow";
+
+const DASH_BG = [toImgurDirect("https://imgur.com/t4yWwhI")];
 
 export default function Dashboard() {
   const { user, loading, isAdmin, isStaff } = useAuth();
   const navigate = useNavigate();
 
   if (loading) return (
-    <div style={styles.loaderContainer}>
-      <div style={styles.spinner} />
-      <span style={styles.loaderText}>Loading Dashboard...</span>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
+    <BackgroundSlideshow slides={DASH_BG} className="min-h-screen pt-16">
+      <div style={styles.loaderContainer}>
+        <div style={styles.spinner} />
+        <span style={styles.loaderText}>Loading Dashboard...</span>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    </BackgroundSlideshow>
   );
 
   const isAuthenticated = !!(user && user.email);
@@ -27,6 +32,7 @@ export default function Dashboard() {
 
   return (
     // ✅ <Navbar /> ඉවත් කළා — App.js එකේ global Navbar use වෙනවා
+    <BackgroundSlideshow slides={DASH_BG} className="min-h-screen pt-16">
     <div style={styles.container}>
       <div style={styles.contentWrapper}>
         <header style={{ marginBottom: 40 }}>
@@ -39,7 +45,7 @@ export default function Dashboard() {
         </header>
 
         {isAuthenticated && (
-          <div style={styles.profileCard}>
+          <div style={styles.profileCard} className="card-3d">
             <img
               src={user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || "User")}&background=4f6fff&color=fff`}
               alt="profile"
@@ -70,10 +76,9 @@ export default function Dashboard() {
           {actions.filter(a => a.show).map(item => (
             <button
               key={item.id}
+              className="card-3d"
               onClick={() => navigate(item.path)}
               style={{ ...styles.actionButton, color: item.color, border: `1px solid ${item.color}22` }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.borderColor = `${item.color}66`; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)";    e.currentTarget.style.borderColor = `${item.color}22`; }}
             >
               <div style={{ fontSize: 36, marginBottom: 14 }}>{item.icon}</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: "#e8ecff" }}>{item.label}</div>
@@ -82,32 +87,33 @@ export default function Dashboard() {
         </div>
 
         {!isAuthenticated && (
-          <div style={styles.guestCTA}>
+          <div style={styles.guestCTA} className="card-3d">
             <h4 style={{ color: "#e8ecff", margin: "0 0 8px 0", fontSize: 18 }}>Unlock Full Access</h4>
             <button onClick={() => navigate("/login")} style={styles.signInBtn}>Sign In Now</button>
           </div>
         )}
       </div>
     </div>
+    </BackgroundSlideshow>
   );
 }
 
 const styles = {
-  container:       { minHeight: "100vh", backgroundColor: "#060812", paddingTop: 80, fontFamily: "'DM Sans', sans-serif" },
+  container:       { minHeight: "100vh", backgroundColor: "transparent", paddingTop: 24, fontFamily: "'DM Sans', sans-serif" },
   contentWrapper:  { padding: "0 24px 40px", maxWidth: "900px", margin: "0 auto" },
-  loaderContainer: { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#060812", flexDirection: "column", gap: 15 },
+  loaderContainer: { minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", flexDirection: "column", gap: 15 },
   spinner:         { width: 40, height: 40, border: "3px solid #1e2a3a", borderTop: "3px solid #4f6fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
   loaderText:      { color: "#4f6fff", fontSize: 14, fontWeight: 500 },
-  welcomeText:     { color: "#e8ecff", fontSize: 32, fontWeight: 800, marginBottom: 8 },
-  subText:         { color: "#6b7599", fontSize: 16 },
-  profileCard:     { background: "linear-gradient(145deg, rgba(13,17,32,0.9), rgba(20,25,45,0.9))", border: "1px solid rgba(99,130,255,0.15)", borderRadius: 20, padding: 28, marginBottom: 40, display: "flex", alignItems: "center", gap: 24, boxShadow: "0 10px 30px rgba(0,0,0,0.3)" },
+  welcomeText:     { color: "#ffffff", fontSize: 32, fontWeight: 800, marginBottom: 8, textShadow: "0 18px 50px rgba(0,0,0,.35)" },
+  subText:         { color: "rgba(255,255,255,0.70)", fontSize: 16 },
+  profileCard:     { background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 20, padding: 28, marginBottom: 40, display: "flex", alignItems: "center", gap: 24, boxShadow: "0 18px 60px rgba(0,0,0,0.25)", backdropFilter: "blur(14px)" },
   avatar:          { width: 85, height: 85, borderRadius: "50%", border: "3px solid #4f6fff", objectFit: "cover" },
   userName:        { margin: "0 0 6px", fontSize: "1.4rem", color: "#e8ecff", fontWeight: 700 },
-  userEmail:       { margin: "0 0 14px", color: "#6b7599", fontSize: 14 },
+  userEmail:       { margin: "0 0 14px", color: "rgba(255,255,255,0.60)", fontSize: 14 },
   roleBadge:       { padding: "5px 14px", borderRadius: 30, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.5px" },
-  sectionTitle:    { color: "#e8ecff", fontSize: 18, fontWeight: 700, marginBottom: 20 },
+  sectionTitle:    { color: "#ffffff", fontSize: 18, fontWeight: 800, marginBottom: 20, textShadow: "0 18px 50px rgba(0,0,0,.35)" },
   grid:            { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 20 },
-  actionButton:    { background: "rgba(13,17,32,0.8)", borderRadius: 16, padding: "30px 20px", cursor: "pointer", textAlign: "center", transition: "all 0.3s ease", outline: "none" },
-  guestCTA:        { marginTop: 48, padding: "32px", borderRadius: 16, background: "rgba(79, 111, 255, 0.03)", border: "1px dashed rgba(79, 111, 255, 0.25)", textAlign: "center" },
+  actionButton:    { background: "rgba(0,0,0,0.35)", borderRadius: 16, padding: "30px 20px", cursor: "pointer", textAlign: "center", transition: "all 0.2s ease", outline: "none", boxShadow: "0 18px 60px rgba(0,0,0,0.22)", backdropFilter: "blur(14px)" },
+  guestCTA:        { marginTop: 48, padding: "32px", borderRadius: 16, background: "rgba(0,0,0,0.28)", border: "1px dashed rgba(255,255,255,0.18)", textAlign: "center", backdropFilter: "blur(14px)" },
   signInBtn:       { background: "linear-gradient(135deg, #4f6fff, #3b5bdb)", color: "white", border: "none", padding: "12px 32px", borderRadius: 10, fontWeight: 700, cursor: "pointer", fontSize: 15 },
 };
