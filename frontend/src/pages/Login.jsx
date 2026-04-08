@@ -194,7 +194,13 @@ export default function Login() {
               disabled={submitting}
               className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--accent2)] px-5 py-3 text-sm font-extrabold text-[#061018] shadow-[0_14px_40px_rgba(0,229,195,.18)] hover:opacity-95 disabled:opacity-60"
             >
-              {submitting ? (mode === 'register' ? 'Registering…' : 'Logging in…') : mode === 'register' ? 'Create account' : 'Login'}
+              {submitting
+                ? mode === 'register'
+                  ? 'Registering…'
+                  : 'Logging in…'
+                : mode === 'register'
+                  ? 'Create account'
+                  : 'Login'}
               <IconChevronRight size={18} />
             </button>
           </form>
