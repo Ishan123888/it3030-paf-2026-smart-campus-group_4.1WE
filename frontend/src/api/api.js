@@ -5,7 +5,7 @@ const api = axios.create({
   baseURL: 'http://localhost:8081/api',
 });
 
-// 2. Request Interceptor එක - හැම Request එකකටම Token එක එකතු කරයි
+// 2. Request Interceptor එක
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -20,7 +20,6 @@ api.interceptors.request.use(
 );
 
 // ─── Auth ──────────────────────────────────────────
-// දැන් හැම තැනම පාවිච්චි කරන්නේ උඩ හදපු "api" instance එකමයි
 export const getMe = () => api.get('/users/me');
 
 // ─── Notifications ─────────────────────────────────
@@ -35,10 +34,13 @@ export const getAllUsers         = ()            => api.get('/users');
 export const updateUserRole      = (id, role)    => api.put(`/users/${id}/roles`, { roles: [role] });
 
 // ─── Resources ─────────────────────────────────────
-export const getResources        = ()         => api.get('/resources');
-export const createResource      = (data)     => api.post('/resources', data);
-export const updateResource      = (id, data) => api.put(`/resources/${id}`, data);
-export const deleteResource      = (id)       => api.delete(`/resources/${id}`);
+export const getResources         = (params) => api.get('/resources', { params });
+export const getResourceById      = (id)     => api.get(`/resources/${id}`);
+export const getResourceTypes     = ()       => api.get('/resources/types');
+export const createResource       = (data)   => api.post('/resources', data);
+export const updateResource       = (id, data) => api.put(`/resources/${id}`, data);
+export const toggleResourceStatus = (id)     => api.patch(`/resources/${id}/status`);
+export const deleteResource       = (id)     => api.delete(`/resources/${id}`);
 
 // ─── Bookings ──────────────────────────────────────
 export const getBookings         = ()          => api.get('/bookings');
