@@ -5,11 +5,18 @@ import ProtectedRoute from './routes/ProtectedRoute';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
+import AdminLogin from './pages/AdminLogin';
 import OAuthCallback from './pages/OAuthCallback';
 import Dashboard from './pages/Dashboard';
 import Incidents from './pages/Incidents';
 import AdminPanel from './pages/AdminPanel';
 import UserManagement from './pages/admin/UserManagement';
+import AdminOverview from './pages/admin/AdminOverview';
+import AdminIncidentsPage from './pages/admin/AdminIncidentsPage';
+import AdminEditProfile from './pages/admin/AdminEditProfile';
+import AddAdmin from './pages/admin/AddAdmin';
+import ResourcesPage from './pages/ResourcesPage';
+import AdminResourcesPage from './pages/AdminResourcesPage';
 import Contact from './pages/Contact';
 
 import Navbar from './components/common/Navbar';
@@ -20,7 +27,9 @@ function AppLayout() {
   const location = useLocation();
   
   // මේ pages වලදී Navbar/Footer පෙන්වන්න එපා
-  const hideLayout = ['/login', '/oauth-callback'].includes(location.pathname);
+  const hideLayout = ['/login', '/oauth-callback', '/admin/login'].includes(location.pathname)
+    || location.pathname.startsWith('/admin/')
+    || location.pathname === '/admin';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: "var(--bg)", color: "var(--text)" }}>
@@ -30,8 +39,12 @@ function AppLayout() {
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/oauth-callback" element={<OAuthCallback />} />
           <Route path="/contact" element={<Contact />} />
+
+          {/* Resources - Public (anyone can browse) */}
+          <Route path="/dashboard/resources" element={<ResourcesPage />} />
 
           {/* Protected Routes */}
           <Route path="/dashboard" element={
@@ -48,19 +61,37 @@ function AppLayout() {
 
           <Route path="/admin/incidents" element={
             <ProtectedRoute requiredRole="ROLE_ADMIN">
-              <Incidents />
+              <AdminIncidentsPage />
             </ProtectedRoute>
           } />
 
           <Route path="/admin" element={
             <ProtectedRoute requiredRole="ROLE_ADMIN">
-              <AdminPanel />
+              <AdminOverview />
             </ProtectedRoute>
           } />
 
           <Route path="/admin/users" element={
             <ProtectedRoute requiredRole="ROLE_ADMIN">
               <UserManagement />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/resources" element={
+            <ProtectedRoute requiredRole="ROLE_ADMIN">
+              <AdminResourcesPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/profile" element={
+            <ProtectedRoute requiredRole="ROLE_ADMIN">
+              <AdminEditProfile />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/add-admin" element={
+            <ProtectedRoute requiredRole="ROLE_ADMIN">
+              <AddAdmin />
             </ProtectedRoute>
           } />
 

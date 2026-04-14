@@ -4,7 +4,7 @@ import api from '../api/api'; // api.js එකේ export default api නිස�
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
 
   // ✅ Backend වෙතින් user profile fetch කිරීම (පොදු function එකක් ලෙස)
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ✅ App එක මුලින්ම Load වෙනකොට localStorage check කිරීම
   useEffect(() => {

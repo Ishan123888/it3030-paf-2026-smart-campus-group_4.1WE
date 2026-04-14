@@ -159,10 +159,13 @@ public class SecurityConfig {
                 .requestMatchers("/oauth2/**", "/login/**", "/error").permitAll()
                 // Resources GET - public
                 .requestMatchers(HttpMethod.GET, "/api/resources/**").permitAll()
-                // Notifications - authenticated users only
-                .requestMatchers("/api/notifications/**").authenticated()
+                .requestMatchers("/api/resources/**").permitAll()
+                .requestMatchers("/api/dashboard/**").permitAll()
                 // Current user profile - authenticated
                 .requestMatchers("/api/users/me").authenticated()
+                .requestMatchers("/api/users/debug-auth").permitAll()
+                // Notifications - authenticated users only
+                .requestMatchers("/api/notifications/**").authenticated()
                 // User management - ADMIN only
                 .requestMatchers("/api/users/**").hasRole("ADMIN")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

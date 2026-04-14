@@ -42,6 +42,7 @@ public class ResourceService {
         existing.setCapacity(dto.getCapacity());
         existing.setDescription(dto.getDescription());
         existing.setPricePerHour(dto.getPricePerHour());
+        existing.setCurrency(dto.getCurrency() != null ? dto.getCurrency() : "LKR");
         existing.setAvailabilityWindows(dto.getAvailabilityWindows());
         if (dto.getStatus() != null) existing.setStatus(dto.getStatus());
         existing.setUpdatedAt(LocalDateTime.now());
@@ -109,6 +110,7 @@ public class ResourceService {
         r.setStatus(dto.getStatus() != null ? dto.getStatus() : Resource.ResourceStatus.ACTIVE);
         r.setAvailabilityWindows(dto.getAvailabilityWindows());
         r.setPricePerHour(dto.getPricePerHour());
+        r.setCurrency(dto.getCurrency() != null ? dto.getCurrency() : "LKR");
         return r;
     }
 
@@ -124,6 +126,7 @@ public class ResourceService {
         dto.setStatus(r.getStatus());
         dto.setAvailabilityWindows(r.getAvailabilityWindows());
         dto.setPricePerHour(r.getPricePerHour());
+        dto.setCurrency(r.getCurrency() != null ? r.getCurrency() : "LKR");
         dto.setCreatedAt(r.getCreatedAt());
         dto.setUpdatedAt(r.getUpdatedAt());
         return dto;

@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
@@ -25,6 +27,8 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api")
 public class UserController {
+
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     private final UserService userService;
     private final UserRepository userRepository;
@@ -83,6 +87,15 @@ public class UserController {
 
         User user = userRepository.findByEmail(req.getEmail()).orElse(null);
 
+        log.debug("Login attempt for: {}", req.getEmail());
+        log.debug("User found: {}", user != null);
+        if (user != null) {
+            log.debug("User provider: {}", user.getProvider());
+            log.debug("User has password: {}", user.getPassword() != null && !user.getPassword().isBlank());
+            log.debug("User roles: {}", user.getRoles());
+            log.debug("Password matches: {}", user.getPassword() != null && passwordEncoder.matches(req.getPassword(), user.getPassword()));
+        }
+
         // Secure password check
         if (user == null || user.getPassword() == null ||
                 !passwordEncoder.matches(req.getPassword(), user.getPassword())) {
@@ -124,6 +137,18 @@ public class UserController {
     }
 
     // -----------------------------------------------------------------------
+    // PUT /api/users/me — update own profile
+    // -----------------------------------------------------------------------
+    @PutMapping("/users/me")
+    public ResponseEntity<?> updateMyProfile(Principal principal, @RequestBody UserDTO dto) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        UserDTO updated = userService.updateProfile(principal.getName(), dto);
+        return ResponseEntity.ok(updated);
+    }
+
+    // -----------------------------------------------------------------------
     // Admin Only Endpoints (Member 4 - Role Based Access Control)
     // -----------------------------------------------------------------------
 
@@ -157,6 +182,40 @@ public class UserController {
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
+    }
+
+    // -----------------------------------------------------------------------
+    // POST /api/admin/create — Admin creates another admin account
+    // -----------------------------------------------------------------------
+    @PostMapping("/admin/create")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createAdmin(@Valid @RequestBody CreateAdminRequest req) {
+
+        if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Email already registered."));
+        }
+
+        Set<String> roles = new HashSet<>(Set.of("ROLE_ADMIN", "ROLE_USER"));
+        if (req.isIncludeStaff()) roles.add("ROLE_STAFF");
+
+        User admin = new User();
+        admin.setName(req.getName());
+        admin.setEmail(req.getEmail());
+        admin.setPassword(passwordEncoder.encode(req.getPassword()));
+        admin.setRoles(roles);
+        admin.setProvider("local");
+        admin.setJobTitle(req.getJobTitle());
+        admin.setDepartment(req.getDepartment());
+        admin.setCreatedAt(LocalDateTime.now());
+        admin.setLastLogin(LocalDateTime.now());
+        admin.setActive(true);
+
+        userRepository.save(admin);
+        log.info("New admin created: {} by {}", req.getEmail(), "admin");
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "Admin account created successfully.", "email", req.getEmail()));
     }
 
     // ── Request DTOs ──────────────────────────────────────────────────────
@@ -197,5 +256,35 @@ public class UserController {
         public void setEmail(String email) { this.email = email; }
         public String getPassword() { return password; }
         public void setPassword(String password) { this.password = password; }
+    }
+
+    public static class CreateAdminRequest {
+        @NotBlank(message = "Name is required")
+        private String name;
+
+        @NotBlank(message = "Email is required")
+        @Email(message = "Valid email required")
+        private String email;
+
+        @NotBlank(message = "Password is required")
+        @Size(min = 6, message = "Password must be at least 6 characters")
+        private String password;
+
+        private String jobTitle;
+        private String department;
+        private boolean includeStaff = false;
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+        public String getJobTitle() { return jobTitle; }
+        public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
+        public String getDepartment() { return department; }
+        public void setDepartment(String department) { this.department = department; }
+        public boolean isIncludeStaff() { return includeStaff; }
+        public void setIncludeStaff(boolean includeStaff) { this.includeStaff = includeStaff; }
     }
 }

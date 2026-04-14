@@ -21,6 +21,7 @@ api.interceptors.request.use(
 
 // ─── Auth ──────────────────────────────────────────
 export const getMe = () => api.get('/users/me');
+export const updateMyProfile = (data) => api.put('/users/me', data);
 
 // ─── Notifications ─────────────────────────────────
 export const getNotifications    = ()    => api.get('/notifications');
@@ -32,6 +33,7 @@ export const deleteNotification  = (id)  => api.delete(`/notifications/${id}`);
 // ─── Users / Admin ─────────────────────────────────
 export const getAllUsers         = ()            => api.get('/users');
 export const updateUserRole      = (id, role)    => api.put(`/users/${id}/roles`, { roles: [role] });
+export const createAdminUser     = (data)        => api.post('/admin/create', data);
 
 // ─── Resources ─────────────────────────────────────
 export const getResources         = (params) => api.get('/resources', { params });

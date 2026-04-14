@@ -65,10 +65,38 @@ public class UserService {
         userRepository.deleteById(userId);
     }
 
+    public UserDTO updateProfile(String email, UserDTO dto) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+        if (dto.getName() != null && !dto.getName().isBlank()) user.setName(dto.getName());
+        if (dto.getPicture() != null) user.setPicture(dto.getPicture());
+        user.setBio(dto.getBio());
+        user.setDepartment(dto.getDepartment());
+        user.setJobTitle(dto.getJobTitle());
+        user.setOfficeLocation(dto.getOfficeLocation());
+        user.setPhoneNumbers(dto.getPhoneNumbers());
+        user.setWebsite(dto.getWebsite());
+        user.setLinkedIn(dto.getLinkedIn());
+        user.setEmergencyContact(dto.getEmergencyContact());
+        user.setEmergencyPhone(dto.getEmergencyPhone());
+        return toDTO(userRepository.save(user));
+    }
+
     private UserDTO toDTO(User user) {
-        return new UserDTO(
+        UserDTO dto = new UserDTO(
                 user.getId(), user.getEmail(), user.getName(),
                 user.getPicture(), user.getRoles(), user.isActive()
         );
+        dto.setProvider(user.getProvider());
+        dto.setBio(user.getBio());
+        dto.setDepartment(user.getDepartment());
+        dto.setJobTitle(user.getJobTitle());
+        dto.setOfficeLocation(user.getOfficeLocation());
+        dto.setPhoneNumbers(user.getPhoneNumbers());
+        dto.setWebsite(user.getWebsite());
+        dto.setLinkedIn(user.getLinkedIn());
+        dto.setEmergencyContact(user.getEmergencyContact());
+        dto.setEmergencyPhone(user.getEmergencyPhone());
+        return dto;
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "jwt")
 public class JwtProperties {
 
-    private String secret = "smartcampus-secret-key-2026-very-long-secure-string-min-256bits";
+    private String secret = "smartcampus-secret-key-2026-very-long-secure-string-min-256bits-extra-safe";
     private long expiration = 86400000;
 
     public String getSecret() {

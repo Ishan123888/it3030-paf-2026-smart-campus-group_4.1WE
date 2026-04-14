@@ -256,3 +256,214 @@ export function IconGitHub(props) {
   );
 }
 
+
+// ── Admin Dashboard Icons ──────────────────────────────────────────────────
+
+export function IconLayoutDashboard(props) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.8" />
+    </Svg>
+  );
+}
+
+export function IconUsers(props) {
+  return (
+    <Svg {...props}>
+      <path d="M16 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M22 21v-1a6 6 0 0 0-6-6h-4a6 6 0 0 0-6 6v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M1 21v-1a4 4 0 0 1 4-4h.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M7 7a4 4 0 0 0 0 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function IconResource(props) {
+  return (
+    <Svg {...props}>
+      <path d="M3 9l9-6 9 6v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M9 22V12h6v10" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function IconAlertTriangle(props) {
+  return (
+    <Svg {...props}>
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M12 9v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M12 17h.01" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function IconLogOut(props) {
+  return (
+    <Svg {...props}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 17l5-5-5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M21 12H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function IconTrendingUp(props) {
+  return (
+    <Svg {...props}>
+      <path d="M23 6l-9.5 9.5-5-5L1 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M17 6h6v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function IconUserCheck(props) {
+  return (
+    <Svg {...props}>
+      <path d="M16 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M22 21v-1a6 6 0 0 0-6-6h-4a6 6 0 0 0-6 6v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M1 13l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function IconPackage(props) {
+  return (
+    <Svg {...props}>
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M3.27 6.96L12 12.01l8.73-5.05" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M12 22.08V12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function IconActivity(props) {
+  return (
+    <Svg {...props}>
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function IconEdit(props) {
+  return (
+    <Svg {...props}>
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function IconTrash(props) {
+  return (
+    <Svg {...props}>
+      <path d="M3 6h18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function IconToggleLeft(props) {
+  return (
+    <Svg {...props}>
+      <rect x="1" y="7" width="22" height="10" rx="5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="6" cy="12" r="3" fill="currentColor" />
+    </Svg>
+  );
+}
+
+export function IconToggleRight(props) {
+  return (
+    <Svg {...props}>
+      <rect x="1" y="7" width="22" height="10" rx="5" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="18" cy="12" r="3" fill="currentColor" />
+    </Svg>
+  );
+}
+
+export function IconPlus(props) {
+  return (
+    <Svg {...props}>
+      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function IconSearch(props) {
+  return (
+    <Svg {...props}>
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function IconFilter(props) {
+  return (
+    <Svg {...props}>
+      <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function IconUserEdit(props) {
+  return (
+    <Svg {...props}>
+      <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M3 21v-1a7 7 0 0 1 7-7h2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M17.5 17.5l1.5-1.5 2 2-1.5 1.5-2-2Z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15.5 19.5l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function IconPhone(props) {
+  return (
+    <Svg {...props}>
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.07 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16l.02.92Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function IconBriefcase(props) {
+  return (
+    <Svg {...props}>
+      <rect x="2" y="7" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M12 12v3M2 12h20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function IconLink(props) {
+  return (
+    <Svg {...props}>
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function IconShieldUser(props) {
+  return (
+    <Svg {...props}>
+      <path d="M12 2l8 4v6c0 5-3.4 9.5-8 10-4.6-.5-8-5-8-10V6l8-4Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+      <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M8 17c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function IconUserPlus(props) {
+  return (
+    <Svg {...props}>
+      <path d="M16 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M22 21v-1a6 6 0 0 0-6-6h-4a6 6 0 0 0-6 6v1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M1 10h6M4 7v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </Svg>
+  );
+}

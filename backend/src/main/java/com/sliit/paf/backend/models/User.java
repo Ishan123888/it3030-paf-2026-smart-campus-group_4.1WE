@@ -32,6 +32,17 @@ public class User {
     private LocalDateTime lastLogin;
     private boolean active = true;
 
+    // ── Extended Profile Fields ────────────────────────────────────────────
+    private String bio;
+    private String department;
+    private String jobTitle;
+    private String officeLocation;
+    private String phoneNumbers;   // comma-separated up to 4
+    private String website;
+    private String linkedIn;
+    private String emergencyContact;
+    private String emergencyPhone;
+
     public User() {
         this.createdAt = LocalDateTime.now();
         this.roles = new HashSet<>();
@@ -94,4 +105,31 @@ public class User {
     public String getProvider() {
         return this.provider;
     }
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+
+    public String getJobTitle() { return jobTitle; }
+    public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
+
+    public String getOfficeLocation() { return officeLocation; }
+    public void setOfficeLocation(String officeLocation) { this.officeLocation = officeLocation; }
+
+    public String getPhoneNumbers() { return phoneNumbers; }
+    public void setPhoneNumbers(String phoneNumbers) { this.phoneNumbers = phoneNumbers; }
+
+    public String getWebsite() { return website; }
+    public void setWebsite(String website) { this.website = website; }
+
+    public String getLinkedIn() { return linkedIn; }
+    public void setLinkedIn(String linkedIn) { this.linkedIn = linkedIn; }
+
+    public String getEmergencyContact() { return emergencyContact; }
+    public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }
+
+    public String getEmergencyPhone() { return emergencyPhone; }
+    public void setEmergencyPhone(String emergencyPhone) { this.emergencyPhone = emergencyPhone; }
 }

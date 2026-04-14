@@ -224,6 +224,14 @@ export default function Login() {
             Continue with Google
           </button>
 
+          <button
+            type="button"
+            onClick={() => navigate('/admin/login')}
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 py-3 text-sm font-extrabold text-amber-300 hover:bg-amber-500/20"
+          >
+            🔐 Admin Login
+          </button>
+
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
             <div className="text-[11px] font-extrabold tracking-[0.18em] text-white/55 uppercase">Access levels</div>
             <div className="mt-3 space-y-2">
