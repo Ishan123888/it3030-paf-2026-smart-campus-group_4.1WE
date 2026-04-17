@@ -61,6 +61,7 @@ export default function StudentBookingFormPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [availability, setAvailability] = useState(null);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [form, setForm] = useState({
     resourceId: resourceId || '',
     bookingDate: '',
@@ -103,25 +104,47 @@ export default function StudentBookingFormPage() {
   }, [bookingId, isReschedule, resourceId]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadAvailability = async () => {
       if (!resource?.id || !form.bookingDate) {
-        setAvailability(null);
+        if (!cancelled) setAvailability(null);
         return;
       }
 
       try {
+        if (!cancelled) setAvailabilityLoading(true);
         const res = await getBookingAvailability({
           resourceId: resource.id,
           bookingDate: form.bookingDate,
           excludeBookingId: isReschedule ? bookingId : undefined,
         });
-        setAvailability(res.data);
+        if (!cancelled) setAvailability(res.data);
       } catch (err) {
-        setAvailability(null);
+        if (!cancelled) setAvailability(null);
+      } finally {
+        if (!cancelled) setAvailabilityLoading(false);
       }
     };
 
     loadAvailability();
+
+    const intervalId = window.setInterval(loadAvailability, 3000);
+    const handleFocus = () => loadAvailability();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadAvailability();
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [bookingId, form.bookingDate, isReschedule, resource?.id]);
 
   const availabilityText = useMemo(() => {
@@ -165,6 +188,13 @@ export default function StudentBookingFormPage() {
 
   const setField = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
   const selectedSlotKey = form.startTime && form.endTime ? `${form.startTime}-${form.endTime}` : '';
+  const selectedSlot = useMemo(
+    () => timeSlots.find((slot) => slot.key === selectedSlotKey) || null,
+    [selectedSlotKey, timeSlots]
+  );
+  const seatsAfterThisBooking = selectedSlot
+    ? Math.max(selectedSlot.remainingCapacity - Number(form.expectedAttendees || 0), 0)
+    : null;
 
   const selectSlot = (slot) => {
     if (!slot.available || slot.remainingCapacity < form.expectedAttendees) {
@@ -190,7 +220,6 @@ export default function StudentBookingFormPage() {
       return;
     }
 
-    const selectedSlot = timeSlots.find((slot) => slot.key === `${form.startTime}-${form.endTime}`);
     if (selectedSlot && selectedSlot.remainingCapacity < form.expectedAttendees) {
       setError(`Only ${selectedSlot.remainingCapacity} spaces remain for that slot.`);
       return;
@@ -264,6 +293,15 @@ export default function StudentBookingFormPage() {
                     <div style={s.slotHint}>
                       Each booking slot is limited to {SLOT_LENGTH_HOURS} hours. Cancelled bookings reopen the slot automatically.
                     </div>
+                    {selectedSlot && (
+                      <div style={s.capacityBanner}>
+                        Live remaining capacity: {selectedSlot.remainingCapacity}
+                        {availabilityLoading ? ' (updating...)' : ''}
+                        <div style={s.capacityMeta}>
+                          If you book for {form.expectedAttendees}, balance after this request: {seatsAfterThisBooking}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <Label text="Purpose" />
@@ -292,6 +330,22 @@ export default function StudentBookingFormPage() {
                 <InfoRow label="Location" value={resource?.location} />
                 <InfoRow label="Capacity" value={resource?.capacity} />
                 <InfoRow label="Availability" value={availabilityText} />
+                {selectedSlot && (
+                  <InfoRow
+                    label="Remaining Capacity"
+                    value={`${selectedSlot.remainingCapacity} seats live right now`}
+                  />
+                )}
+                {selectedSlot && (
+                  <InfoRow
+                    label="After Your Request"
+                    value={`${seatsAfterThisBooking} seats would remain`}
+                  />
+                )}
+                <InfoRow
+                  label="Live Slot Status"
+                  value="Cancelled, rejected, and rescheduled bookings release capacity again."
+                />
                 {booking && <InfoRow label="Current Status" value={booking.status} />}
               </div>
             </div>
@@ -335,6 +389,8 @@ const s = {
   slotTabDisabled: { opacity: 0.45, cursor: 'not-allowed' },
   slotMeta: { marginTop: 6, fontSize: 11, fontWeight: 600, opacity: 0.9 },
   slotHint: { marginTop: 8, color: 'rgba(219,228,255,0.72)', fontSize: 12 },
+  capacityBanner: { marginTop: 10, padding: '10px 12px', borderRadius: 12, background: 'rgba(16,185,129,0.14)', border: '1px solid rgba(16,185,129,0.28)', color: '#d1fae5', fontSize: 13, fontWeight: 700 },
+  capacityMeta: { marginTop: 6, fontSize: 12, fontWeight: 600, color: '#a7f3d0' },
   submitBtn: { marginTop: 8, background: 'linear-gradient(135deg,#4f6fff,#00e5c3)', border: 'none', color: '#fff', padding: '13px 16px', borderRadius: 12, cursor: 'pointer', fontWeight: 800 },
   infoCard: { background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 18, padding: 24, height: 'fit-content', backdropFilter: 'blur(12px)' },
   infoTitle: { color: '#fff', marginTop: 0, marginBottom: 16 },
