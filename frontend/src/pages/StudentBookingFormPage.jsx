@@ -216,7 +216,7 @@ export default function StudentBookingFormPage() {
     }
 
     if (form.endTime <= form.startTime) {
-      setError('Entime must be after start time.');
+      setError('End time must be after start time.');
       return;
     }
 
