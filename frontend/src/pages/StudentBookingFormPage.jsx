@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createBooking, getMyBookings, getResourceById, rescheduleBooking } from '../api/api';
+import { createBooking, getBookingAvailability, getMyBookings, getResourceById, rescheduleBooking } from '../api/api';
 import BackgroundSlideshow, { toImgurDirect } from '../components/common/BackgroundSlideshow';
 
 const DASH_BG = [toImgurDirect('https://imgur.com/t4yWwhI')];
@@ -60,6 +60,7 @@ export default function StudentBookingFormPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [availability, setAvailability] = useState(null);
   const [form, setForm] = useState({
     resourceId: resourceId || '',
     bookingDate: '',
@@ -101,6 +102,28 @@ export default function StudentBookingFormPage() {
     load();
   }, [bookingId, isReschedule, resourceId]);
 
+  useEffect(() => {
+    const loadAvailability = async () => {
+      if (!resource?.id || !form.bookingDate) {
+        setAvailability(null);
+        return;
+      }
+
+      try {
+        const res = await getBookingAvailability({
+          resourceId: resource.id,
+          bookingDate: form.bookingDate,
+          excludeBookingId: isReschedule ? bookingId : undefined,
+        });
+        setAvailability(res.data);
+      } catch (err) {
+        setAvailability(null);
+      }
+    };
+
+    loadAvailability();
+  }, [bookingId, form.bookingDate, isReschedule, resource?.id]);
+
   const availabilityText = useMemo(() => {
     if (!resource?.availabilityWindows?.length) return 'Campus hours apply.';
     return resource.availabilityWindows.join(', ');
@@ -109,26 +132,44 @@ export default function StudentBookingFormPage() {
   const timeSlots = useMemo(() => {
     const generatedSlots = buildTwoHourSlots(resource?.availabilityWindows);
     const currentSlotKey = form.startTime && form.endTime ? `${form.startTime}-${form.endTime}` : '';
+    const availabilityMap = new Map((availability?.slots || []).map((slot) => [`${slot.startTime}-${slot.endTime}`, slot]));
 
-    if (currentSlotKey && !generatedSlots.some((slot) => slot.key === currentSlotKey)) {
+    const mappedSlots = generatedSlots.map((slot) => {
+      const slotAvailability = availabilityMap.get(slot.key);
+      const remainingCapacity = slotAvailability?.remainingCapacity ?? resource?.capacity ?? 0;
+      return {
+        ...slot,
+        remainingCapacity,
+        occupiedCapacity: slotAvailability?.occupiedCapacity ?? 0,
+        available: slotAvailability?.available ?? true,
+      };
+    });
+
+    if (currentSlotKey && !mappedSlots.some((slot) => slot.key === currentSlotKey)) {
       return [
-        ...generatedSlots,
+        ...mappedSlots,
         {
           key: currentSlotKey,
           startTime: form.startTime,
           endTime: form.endTime,
           label: `${formatTimeLabel(form.startTime)} - ${formatTimeLabel(form.endTime)}`,
+          remainingCapacity: resource?.capacity ?? 0,
+          occupiedCapacity: 0,
+          available: true,
         },
       ].sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
     }
 
-    return generatedSlots;
-  }, [form.endTime, form.startTime, resource?.availabilityWindows]);
+    return mappedSlots;
+  }, [availability?.slots, form.endTime, form.startTime, resource?.availabilityWindows, resource?.capacity]);
 
   const setField = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
   const selectedSlotKey = form.startTime && form.endTime ? `${form.startTime}-${form.endTime}` : '';
 
   const selectSlot = (slot) => {
+    if (!slot.available || slot.remainingCapacity < form.expectedAttendees) {
+      return;
+    }
     setForm((prev) => ({
       ...prev,
       startTime: slot.startTime,
@@ -146,6 +187,12 @@ export default function StudentBookingFormPage() {
 
     if (form.endTime <= form.startTime) {
       setError('End time must be after start time.');
+      return;
+    }
+
+    const selectedSlot = timeSlots.find((slot) => slot.key === `${form.startTime}-${form.endTime}`);
+    if (selectedSlot && selectedSlot.remainingCapacity < form.expectedAttendees) {
+      setError(`Only ${selectedSlot.remainingCapacity} spaces remain for that slot.`);
       return;
     }
 
@@ -191,23 +238,31 @@ export default function StudentBookingFormPage() {
                     <div style={s.slotGrid}>
                       {timeSlots.map((slot) => {
                         const isSelected = selectedSlotKey === slot.key;
+                        const canBookSlot = slot.available && slot.remainingCapacity >= form.expectedAttendees;
                         return (
                           <button
                             key={slot.key}
                             type="button"
                             onClick={() => selectSlot(slot)}
+                            disabled={!canBookSlot}
                             style={{
                               ...s.slotTab,
                               ...(isSelected ? s.slotTabActive : {}),
+                              ...(!canBookSlot ? s.slotTabDisabled : {}),
                             }}
                           >
-                            {slot.label}
+                            <div>{slot.label}</div>
+                            <div style={s.slotMeta}>
+                              {!slot.available
+                                ? 'Full'
+                                : `${slot.remainingCapacity} space${slot.remainingCapacity === 1 ? '' : 's'} left`}
+                            </div>
                           </button>
                         );
                       })}
                     </div>
                     <div style={s.slotHint}>
-                      Each booking slot is limited to {SLOT_LENGTH_HOURS} hours.
+                      Each booking slot is limited to {SLOT_LENGTH_HOURS} hours. Cancelled bookings reopen the slot automatically.
                     </div>
                   </div>
 
@@ -277,6 +332,8 @@ const s = {
   slotGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 },
   slotTab: { width: '100%', padding: '11px 12px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.06)', color: '#dbe4ff', cursor: 'pointer', fontWeight: 700, textAlign: 'center' },
   slotTabActive: { background: 'linear-gradient(135deg,#4f6fff,#00e5c3)', color: '#fff', border: '1px solid transparent', boxShadow: '0 10px 24px rgba(79,111,255,0.24)' },
+  slotTabDisabled: { opacity: 0.45, cursor: 'not-allowed' },
+  slotMeta: { marginTop: 6, fontSize: 11, fontWeight: 600, opacity: 0.9 },
   slotHint: { marginTop: 8, color: 'rgba(219,228,255,0.72)', fontSize: 12 },
   submitBtn: { marginTop: 8, background: 'linear-gradient(135deg,#4f6fff,#00e5c3)', border: 'none', color: '#fff', padding: '13px 16px', borderRadius: 12, cursor: 'pointer', fontWeight: 800 },
   infoCard: { background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 18, padding: 24, height: 'fit-content', backdropFilter: 'blur(12px)' },

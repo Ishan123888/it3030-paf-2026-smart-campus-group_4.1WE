@@ -1,6 +1,7 @@
 package com.sliit.paf.backend.services;
 
 import com.sliit.paf.backend.dto.BookingDTO;
+import com.sliit.paf.backend.dto.BookingAvailabilityDTO;
 import com.sliit.paf.backend.exception.ResourceNotFoundException;
 import com.sliit.paf.backend.models.Booking;
 import com.sliit.paf.backend.models.Resource;
@@ -8,10 +9,18 @@ import com.sliit.paf.backend.models.User;
 import com.sliit.paf.backend.repository.BookingRepository;
 import com.sliit.paf.backend.repository.ResourceRepository;
 import com.sliit.paf.backend.repository.UserRepository;
+import org.bson.Document;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -19,20 +28,25 @@ import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
+    private static final List<String> DEFAULT_WINDOWS = List.of("08:00-18:00");
+    private static final int SLOT_LENGTH_MINUTES = 120;
 
     private final BookingRepository bookingRepository;
     private final ResourceRepository resourceRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final MongoTemplate mongoTemplate;
 
     public BookingService(BookingRepository bookingRepository,
                           ResourceRepository resourceRepository,
                           UserRepository userRepository,
-                          NotificationService notificationService) {
+                          NotificationService notificationService,
+                          MongoTemplate mongoTemplate) {
         this.bookingRepository = bookingRepository;
         this.resourceRepository = resourceRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     public BookingDTO createBooking(String userEmail, BookingDTO dto) {
@@ -59,26 +73,44 @@ public class BookingService {
     }
 
     public List<BookingDTO> getMyBookings(String userEmail, String status, String resourceId, String bookingDate) {
-        return bookingRepository.findByUserEmailOrderByCreatedAtDesc(userEmail).stream()
+        return readBookingDocuments().stream()
                 .filter(Objects::nonNull)
+                .filter(booking -> booking.getUserEmail() != null && booking.getUserEmail().equalsIgnoreCase(userEmail))
                 .filter(booking -> matchesFilters(booking, status, resourceId, bookingDate))
-                .sorted(Comparator.comparing(Booking::getBookingDate, Comparator.nullsLast(Comparator.naturalOrder())).reversed()
-                        .thenComparing(Booking::getStartTime, Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(Booking::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-                .map(this::toDTO)
+                .sorted(Comparator.comparing(BookingDTO::getBookingDate, Comparator.nullsLast(Comparator.naturalOrder())).reversed()
+                        .thenComparing(BookingDTO::getStartTime, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(BookingDTO::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .collect(Collectors.toList());
     }
 
     public List<BookingDTO> getAllBookings(String status, String resourceId, String bookingDate, String userEmail) {
-        return bookingRepository.findAll().stream()
+        return readBookingDocuments().stream()
                 .filter(Objects::nonNull)
                 .filter(booking -> matchesFilters(booking, status, resourceId, bookingDate))
                 .filter(booking -> userEmail == null || userEmail.isBlank()
                         || (booking.getUserEmail() != null
                         && booking.getUserEmail().toLowerCase(Locale.ROOT).contains(userEmail.toLowerCase(Locale.ROOT))))
-                .sorted(Comparator.comparing(Booking::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-                .map(this::toDTO)
+                .sorted(Comparator.comparing(BookingDTO::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .collect(Collectors.toList());
+    }
+
+    public BookingAvailabilityDTO getAvailability(String resourceId, LocalDate bookingDate, String excludeBookingId) {
+        Resource resource = getResource(resourceId);
+        List<BookingDTO> activeBookings = readBookingDocuments().stream()
+                .filter(Objects::nonNull)
+                .filter(booking -> Objects.equals(booking.getResourceId(), resourceId))
+                .filter(booking -> Objects.equals(booking.getBookingDate(), bookingDate))
+                .filter(booking -> booking.getStatus() == Booking.BookingStatus.PENDING
+                        || booking.getStatus() == Booking.BookingStatus.APPROVED)
+                .filter(booking -> excludeBookingId == null || excludeBookingId.isBlank() || !excludeBookingId.equals(booking.getId()))
+                .collect(Collectors.toList());
+
+        BookingAvailabilityDTO dto = new BookingAvailabilityDTO();
+        dto.setResourceId(resourceId);
+        dto.setBookingDate(bookingDate);
+        dto.setResourceCapacity(resource.getCapacity());
+        dto.setSlots(buildSlotAvailability(resource, activeBookings));
+        return dto;
     }
 
     public BookingDTO cancelBooking(String bookingId, String userEmail) {
@@ -171,6 +203,16 @@ public class BookingService {
         return matchesStatus && matchesResource && matchesDate;
     }
 
+    private boolean matchesFilters(BookingDTO booking, String status, String resourceId, String bookingDate) {
+        boolean matchesStatus = status == null || status.isBlank()
+                || (booking.getStatus() != null && booking.getStatus().name().equalsIgnoreCase(status));
+        boolean matchesResource = resourceId == null || resourceId.isBlank()
+                || resourceId.equals(booking.getResourceId());
+        boolean matchesDate = bookingDate == null || bookingDate.isBlank()
+                || (booking.getBookingDate() != null && booking.getBookingDate().toString().equals(bookingDate));
+        return matchesStatus && matchesResource && matchesDate;
+    }
+
     private void validateBookingWindow(BookingDTO dto, Resource resource, String userEmail, String currentBookingId, boolean requireConflictCheck) {
         if (resource.getStatus() != Resource.ResourceStatus.ACTIVE) {
             throw new RuntimeException("Selected resource is currently unavailable.");
@@ -234,6 +276,176 @@ public class BookingService {
 
     private boolean hasRole(User user, String role) {
         return user.getRoles() != null && user.getRoles().contains(role);
+    }
+
+    private List<BookingAvailabilityDTO.SlotAvailabilityDTO> buildSlotAvailability(Resource resource, List<BookingDTO> activeBookings) {
+        List<String> windows = resource.getAvailabilityWindows();
+        if (windows == null || windows.isEmpty()) {
+            windows = DEFAULT_WINDOWS;
+        }
+
+        List<BookingAvailabilityDTO.SlotAvailabilityDTO> slots = new ArrayList<>();
+        for (String window : windows) {
+            if (window == null || !window.contains("-")) continue;
+            String[] parts = window.split("-");
+            LocalTime windowStart = safeParseTime(parts[0]);
+            LocalTime windowEnd = safeParseTime(parts[1]);
+            if (windowStart == null || windowEnd == null || !windowEnd.isAfter(windowStart)) continue;
+
+            for (LocalTime slotStart = windowStart; !slotStart.plusMinutes(SLOT_LENGTH_MINUTES).isAfter(windowEnd); slotStart = slotStart.plusMinutes(SLOT_LENGTH_MINUTES)) {
+                LocalTime slotEnd = slotStart.plusMinutes(SLOT_LENGTH_MINUTES);
+                LocalTime currentSlotStart = slotStart;
+                LocalTime currentSlotEnd = slotEnd;
+                int occupiedCapacity = activeBookings.stream()
+                        .filter(booking -> booking.getStartTime() != null && booking.getEndTime() != null)
+                        .filter(booking -> overlaps(currentSlotStart, currentSlotEnd, booking.getStartTime(), booking.getEndTime()))
+                        .map(BookingDTO::getExpectedAttendees)
+                        .filter(Objects::nonNull)
+                        .mapToInt(Integer::intValue)
+                        .sum();
+
+                int totalCapacity = Math.max(resource.getCapacity(), 0);
+                int remainingCapacity = totalCapacity <= 0
+                        ? (occupiedCapacity == 0 ? Integer.MAX_VALUE : 0)
+                        : Math.max(totalCapacity - occupiedCapacity, 0);
+
+                BookingAvailabilityDTO.SlotAvailabilityDTO slot = new BookingAvailabilityDTO.SlotAvailabilityDTO();
+                slot.setStartTime(currentSlotStart.toString());
+                slot.setEndTime(currentSlotEnd.toString());
+                slot.setOccupiedCapacity(occupiedCapacity);
+                slot.setRemainingCapacity(remainingCapacity);
+                slot.setAvailable(totalCapacity <= 0 ? occupiedCapacity == 0 : remainingCapacity > 0);
+                slots.add(slot);
+            }
+        }
+        return slots;
+    }
+
+    private List<BookingDTO> readBookingDocuments() {
+        return mongoTemplate.findAll(Document.class, "bookings").stream()
+                .map(this::toDTO)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private BookingDTO toDTO(Document doc) {
+        try {
+            BookingDTO dto = new BookingDTO();
+            dto.setId(asString(doc.get("_id")));
+            dto.setResourceId(asString(doc.get("resourceId")));
+            dto.setResourceName(asString(doc.get("resourceName")));
+            dto.setUserId(asString(doc.get("userId")));
+            dto.setUserName(asString(doc.get("userName")));
+            dto.setUserEmail(asString(doc.get("userEmail")));
+            dto.setBookingDate(asLocalDate(doc.get("bookingDate")));
+            dto.setStartTime(asLocalTime(doc.get("startTime")));
+            dto.setEndTime(asLocalTime(doc.get("endTime")));
+            dto.setPurpose(asString(doc.get("purpose")));
+            dto.setExpectedAttendees(asInteger(doc.get("expectedAttendees")));
+            dto.setStatus(asBookingStatus(doc.get("status")));
+            dto.setAdminReason(asString(doc.get("adminReason")));
+            dto.setReviewedBy(asString(doc.get("reviewedBy")));
+            dto.setReviewedAt(asLocalDateTime(doc.get("reviewedAt")));
+            dto.setCreatedAt(asLocalDateTime(doc.get("createdAt")));
+            dto.setUpdatedAt(asLocalDateTime(doc.get("updatedAt")));
+            return dto;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private String asString(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private Integer asInteger(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            return Integer.parseInt(text);
+        }
+        return null;
+    }
+
+    private LocalDate asLocalDate(Object value) {
+        if (value instanceof LocalDate localDate) {
+            return localDate;
+        }
+        if (value instanceof Date date) {
+            return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return LocalDate.parse(text);
+            } catch (DateTimeParseException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private LocalTime asLocalTime(Object value) {
+        if (value instanceof LocalTime localTime) {
+            return localTime;
+        }
+        if (value instanceof Date date) {
+            return date.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return LocalTime.parse(text);
+            } catch (DateTimeParseException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private LocalDateTime asLocalDateTime(Object value) {
+        if (value instanceof LocalDateTime localDateTime) {
+            return localDateTime;
+        }
+        if (value instanceof Date date) {
+            return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return LocalDateTime.parse(text);
+            } catch (DateTimeParseException ignored) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private Booking.BookingStatus asBookingStatus(Object value) {
+        if (value instanceof Booking.BookingStatus status) {
+            return status;
+        }
+        if (value instanceof String text && !text.isBlank()) {
+            try {
+                return Booking.BookingStatus.valueOf(text.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ignored) {
+                if ("CANCELED".equalsIgnoreCase(text)) {
+                    return Booking.BookingStatus.CANCELLED;
+                }
+            }
+        }
+        return Booking.BookingStatus.PENDING;
+    }
+
+    private LocalTime safeParseTime(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return LocalTime.parse(value.trim());
+        } catch (DateTimeParseException ex) {
+            return null;
+        }
+    }
+
+    private boolean overlaps(LocalTime startA, LocalTime endA, LocalTime startB, LocalTime endB) {
+        return startA.isBefore(endB) && endA.isAfter(startB);
     }
 
     private void validateDuplicateUserBooking(String userEmail,
