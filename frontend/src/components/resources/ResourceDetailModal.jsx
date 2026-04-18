@@ -5,6 +5,7 @@ import {
 } from "../common/Icons";
 import { useBrands } from "../../hooks/useBrands";
 
+// eslint-disable-next-line no-unused-vars
 const TYPE_ICONS = {
   LECTURE_HALL: "🏛️", LAB: "🔬", MEETING_ROOM: "🤝",
   PROJECTOR: "📽️", CAMERA: "📷", LAPTOP: "💻",
