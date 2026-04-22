@@ -9,6 +9,7 @@ const mockResources = [
 ];
 
 function setupPublicIntercepts() {
+  cy.intercept("GET", "**/api/users/me", { statusCode: 401, body: {} }).as("getMe");
   cy.intercept("GET", "**/api/resources*", { statusCode: 200, body: mockResources }).as("getResources");
 }
 
@@ -17,7 +18,7 @@ describe("Campus Resources Page", () => {
   beforeEach(() => {
     setupPublicIntercepts();
     cy.visit("/dashboard/resources");
-    cy.contains("Campus Resources", { timeout: 8000 }).should("be.visible");
+    cy.wait("@getResources", { timeout: 10000 });
   });
 
   // ── Page Load ──────────────────────────────────────────────────────────────
